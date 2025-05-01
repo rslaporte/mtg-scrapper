@@ -1,7 +1,7 @@
 __pycache__/
 .venv/
-.data_garbage/
+data_garbage/
 .gitignore
-.df_urza.py
+df_urza.py
 
 
