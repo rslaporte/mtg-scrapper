@@ -8,16 +8,16 @@ import pytesseract
 import io
 from pathlib import Path
 
-from playwright.async_api import async_playwright, expect
+from playwright.async_api import async_playwright
 from PIL import Image
 import cv2
 
 #%%
 class Scraper:
     def __init__(self, cards_path):
-        self.df_cards = pd.read_csv(cards_path).iloc[[59]]
+        self.df_cards = pd.read_csv(cards_path)
         self.df_size = self.df_cards['name'].count()
-        self.batch_size = 1
+        self.batch_size = 10
 
     def save_to_csv(self, df, filename=r'C:\Users\Rafael\Desktop\codes\mtg_scrapper\data\urza-s_saga_price.csv'):
         status = ''
@@ -34,7 +34,7 @@ class Scraper:
         updated_df.to_csv(filename, index=False)
         print(f"CSV file in path: {filename}, has been {status}")  
 
-    def df_paginated(self, page):
+    def df_splitted(self, page):
         initial_position = page*self.batch_size
         final_position = (page+1)*self.batch_size
 
@@ -42,17 +42,19 @@ class Scraper:
             final_position = self.df_size
 
         with open("execution.log", "a") as f:
-            f.write(f"NUMERO DE URLS PROCESSADAS: {final_position - initial_position}\n")
+            f.write(f"URLS A SEREM PROCESSADAS: {final_position - initial_position}\n")
+            f.write(f"POSICAO DE INICIO: {initial_position}\n")
+            f.write("---------------------------------------------------------------\n")
         
         return self.df_cards.iloc[initial_position : final_position, :].copy()   
 
-    def df_formating(self, df, results):
+    def df_formater(self, df, results):
         df['date'] = datetime.date.today().strftime('%Y-%m-%d')
         df['prices'] = [result["value"] for result in results]
         df['prices_mean'] = [result["mean"] for result in results]
 
         cols = df.columns.tolist()
-        cols = [cols[6]] + cols[:6] + cols[7:]
+        cols = [cols[8]] + cols[:8] + cols[9:]
         df = df[cols]
 
         return df
@@ -61,7 +63,7 @@ class Scraper:
     async def browser_handle(self, browser, card):
         #Getting the page
         page = await browser.new_page()
-        await page.goto(card.url, wait_until="load")  
+        await page.goto(card.url, wait_until="load")   
 
         #Getting the relevant buttons
         lgpd_button = page.get_by_role('button', name="Permitir Todos os Cookies")
@@ -80,6 +82,7 @@ class Scraper:
     #Using OCR to get the prices
     async def image_to_string(self, price_element):
         #Getting the element image
+
         image_bytes = await price_element.screenshot()        
         image = Image.open(io.BytesIO(image_bytes))
 
@@ -118,14 +121,20 @@ class Scraper:
             else:
                 price = await price_element.inner_text()
 
-            price = price.replace(",", ".").replace("R$", "").strip()
+            price = price.replace(".","").replace(",", ".").replace("R$", "").strip()
             if(price.endswith(".")): price = price[:-1]
-            prices.append(float(price))
-            if(len(prices) == 10): break
+
+            try:
+                prices.append(float(price))
+            except:
+                continue
+
+            ##Number of prices scrapped
+            if(len(prices) == 8): break
 
         prices = {
             "value": np.array(prices),
-            "mean": np.mean(prices)
+            "mean": np.mean(prices) if len(prices) else 0
         }
 
         return prices
@@ -133,25 +142,35 @@ class Scraper:
     async def run(self, page):
         start_time = time.time() 
         
-        df_paginated = self.df_paginated(page)
+        df_splitted = self.df_splitted(page)
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
 
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 800},
+                extra_http_headers={
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Upgrade-Insecure-Requests": "1",
+                    "DNT": "1",  # Do Not Track
+                }
+        )
+
             #use row (np.array) in the function
-            tasks = [self.get_price(browser, card) 
-                     for card in df_paginated.itertuples(index=False)
+            tasks = [self.get_price(context, card) 
+                     for card in df_splitted.itertuples(index=False)
             ]
 
             results = await asyncio.gather(*tasks)
             await browser.close()
 
 
-        df_paginated = self.df_formating(df_paginated, results)
-        self.save_to_csv(df_paginated)
+        df_splitted = self.df_formater(df_splitted, results)
+        self.save_to_csv(df_splitted)
 
         with open("execution.log", "a") as f:
+            f.write(f"URLS PROCESSADAS: {len(results)}\n")
             f.write(f"TEMPO TOTAL DE EXECUCAO: {time.time() - start_time} SEGUNDOS\n")
-            f.write("---------------------------------------------------------------\n")
         
-        return df_paginated
+        return df_splitted

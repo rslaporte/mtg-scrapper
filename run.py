@@ -13,23 +13,33 @@ def main():
 
     def job():        
         with open("execution.log", "a") as f:
-            f.write(f"EXECUTADO EM: {datetime.now()}\n")
+            f.write("##################################################################################\n")
+            f.write(f"EXECUTANDO EM: {datetime.now()}\n")
 
         nonlocal executions
         
-        print(f"Execução {executions + 1} iniciada...")        
-        asyncio.run(scraper.run(executions)) 
+        print(f"Execução {executions + 1} iniciada...")
+        try:
+            asyncio.run(scraper.run(executions)) 
+        except NameError:
+            with open("execution.log", "a") as f:
+                f.write(f"{datetime.now()} ERRO: {NameError}\n")
+                   
 
         executions += 1
         if executions >= max_executions:
             print("Execuções concluídas. Encerrando agendador.")
+
+            with open("execution.log", "a") as f:
+                f.write(f"{datetime.now()} ERRO: {NameError}\n")
+
             return schedule.CancelJob 
         
     #First execution
     job()
 
     # Agenda a primeira execução imediata + repetições a cada 10 minutos
-    schedule.every(30).seconds.do(job)
+    schedule.every(15).minutes.do(job)
 
     # Mantém o script rodando até que todas as execuções sejam completadas
     while executions < max_executions:
