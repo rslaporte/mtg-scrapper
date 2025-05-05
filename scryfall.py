@@ -16,7 +16,7 @@ class ScryfallAPI:
             df_cards = pd.json_normalize(cards)[['name', 'printed_name', 'type_line', 'mana_cost', 'colors']]        
             df_cards['name_formatted'] = df_cards['name'].map(lambda x: x.lower().replace(' ', '+'))
             df_cards['edition_code'] = set_code.upper()
-            df_cards['edition_pt'] = 'A Saga de Urza'
+            df_cards['edition_pt'] = 'Terras Natais'
             df_cards['url'] = [f"https://www.ligamagic.com.br/?view=cards/card&card={card}" for card in df_cards['name_formatted']]
             
             frames.append(df_cards.drop(columns=['name_formatted']))
@@ -64,7 +64,7 @@ class ScryfallAPI:
 
 #%%
 scryfall = ScryfallAPI()
-df = scryfall.cards_to_csv("Urza's Saga")
+df = scryfall.cards_to_csv("Homelands")
 
 # %%
-scryfall.getCards("Urza's Saga")
+scryfall.getCards("Homelands")

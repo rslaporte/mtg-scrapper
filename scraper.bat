@@ -1,4 +1,5 @@
 @echo off
-REM Ativa o venv e executa o script
-START /B /LOW C:\Users\Rafael\Desktop\codes\mtg_scrapper\.venv\Scripts\activate.bat && python C:\Users\Rafael\Desktop\codes\mtg_scrapper\run.py
-
+cd /d "C:\Users\Rafael\Desktop\codes\mtg_scrapper\"
+call .venv\Scripts\activate.bat  :: Ativa o venv
+python run.py
+pause  :: Mantém a janela aberta

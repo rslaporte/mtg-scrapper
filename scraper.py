@@ -6,6 +6,7 @@ import datetime
 import time
 import pytesseract
 import io
+
 from pathlib import Path
 
 from playwright.async_api import async_playwright
@@ -19,8 +20,9 @@ class Scraper:
         self.df_size = self.df_cards['name'].count()
         self.batch_size = 10
 
-    def save_to_csv(self, df, filename=r'C:\Users\Rafael\Desktop\codes\mtg_scrapper\data\urza-s_saga_price.csv'):
+    def save_to_csv(self, df, edition):
         status = ''
+        filename = r'C:\Users\Rafael\Desktop\codes\mtg_scrapper\data\price_' + edition + r'.csv'
         file_path = Path(filename)
 
         if(file_path.exists()):
@@ -34,14 +36,14 @@ class Scraper:
         updated_df.to_csv(filename, index=False)
         print(f"CSV file in path: {filename}, has been {status}")  
 
-    def df_splitted(self, page):
+    def df_splitted(self, edition, page):
         initial_position = page*self.batch_size
         final_position = (page+1)*self.batch_size
 
         if(final_position > self.df_size): 
             final_position = self.df_size
 
-        with open("execution.log", "a") as f:
+        with open(f"execution_{edition}.log", "a") as f:
             f.write(f"URLS A SEREM PROCESSADAS: {final_position - initial_position}\n")
             f.write(f"POSICAO DE INICIO: {initial_position}\n")
             f.write("---------------------------------------------------------------\n")
@@ -52,6 +54,8 @@ class Scraper:
         df['date'] = datetime.date.today().strftime('%Y-%m-%d')
         df['prices'] = [result["value"] for result in results]
         df['prices_mean'] = [result["mean"] for result in results]
+        df['prices_median'] = [result["median"] for result in results]
+        df['prices_min'] = [result["min"] for result in results]
 
         cols = df.columns.tolist()
         cols = [cols[8]] + cols[:8] + cols[9:]
@@ -134,19 +138,20 @@ class Scraper:
 
         prices = {
             "value": np.array(prices),
-            "mean": np.mean(prices) if len(prices) else 0
+            "median": np.median(prices) if len(prices) else 0,
+            "mean": np.mean(prices) if len(prices) else 0,
+            "min": np.min(prices) if len(prices) else 0
         }
 
         return prices
 
-    async def run(self, page):
+    async def run(self, edition, page):
         start_time = time.time() 
         
-        df_splitted = self.df_splitted(page)
+        df_splitted = self.df_splitted(edition, page)
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
-
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 800},
@@ -155,7 +160,7 @@ class Scraper:
                     "Upgrade-Insecure-Requests": "1",
                     "DNT": "1",  # Do Not Track
                 }
-        )
+            )
 
             #use row (np.array) in the function
             tasks = [self.get_price(context, card) 
@@ -167,9 +172,9 @@ class Scraper:
 
 
         df_splitted = self.df_formater(df_splitted, results)
-        self.save_to_csv(df_splitted)
+        self.save_to_csv(df_splitted, edition)
 
-        with open("execution.log", "a") as f:
+        with open(f"execution_{edition}.log", "a") as f:
             f.write(f"URLS PROCESSADAS: {len(results)}\n")
             f.write(f"TEMPO TOTAL DE EXECUCAO: {time.time() - start_time} SEGUNDOS\n")
         
