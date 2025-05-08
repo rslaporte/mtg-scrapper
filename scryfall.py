@@ -5,15 +5,15 @@ import pandas as pd
 #%%
 class ScryfallAPI:
     def __init__(self):
-        self.url = "https://api.scryfall.com/" 
+        self.url = "https://api.scryfall.com/"
         self.headers = {"User-Agent": "MTGCardsSearchExample/1.0", "Accept": "*/*"}
 
     def cards_df(self, card_pages, set_name):
         frames = []
-        set_code = self.getSets(set_name)['code'].values[0]        
+        set_code = self.getSets(set_name)['code'].values[0]
 
         for cards in card_pages:
-            df_cards = pd.json_normalize(cards)[['name', 'printed_name', 'type_line', 'mana_cost', 'colors']]        
+            df_cards = pd.json_normalize(cards)[['name', 'printed_name', 'type_line', 'mana_cost', 'colors']]
             df_cards['name_formatted'] = df_cards['name'].map(lambda x: x.lower().replace(' ', '+'))
             df_cards['edition_code'] = set_code.upper()
             df_cards['edition_pt'] = 'Terras Natais'

@@ -15,7 +15,7 @@ def main(edition):
     max_retries = 3
     max_executions = math.ceil(scraper.df.size / scraper.df.batch_size) 
     
-    def job():        
+    def job():
         retry_count = 1
         nonlocal executions
         success = False
@@ -41,7 +41,7 @@ def main(edition):
         executions += 1
         if executions >= max_executions:
             print("Execuções concluídas. Encerrando agendador.")
-            
+            logger.write(['EXECUCAO DO SCRIPT CONCLUIDA.'])
 
             return schedule.CancelJob 
         
@@ -56,5 +56,5 @@ def main(edition):
         schedule.run_pending()
         time.sleep(1)
 
-if __name__ == '__main__':  
+if __name__ == '__main__':
     main("urza-s_saga")

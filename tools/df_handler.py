@@ -1,13 +1,15 @@
 import pandas as pd
-import datetime 
+import datetime
+import os
 
 from .logger import Logger
 from pathlib import Path
 
-class DFHandler():    
+class DFHandler():
     def __init__(self, edition):
         self.edition = edition
-        self.card_path = r'C:\Users\Rafael\Desktop\codes\mtg_scrapper\data\cards_' + edition + r'.csv'
+        self.current_path = os.getcwd()
+        self.card_path =  self.current_path + f"\\data\\cards_{edition}.csv"
 
         self.df_cards = pd.read_csv(self.card_path)
         self.size = self.df_cards['name'].count()
@@ -15,7 +17,7 @@ class DFHandler():
 
     def save(self, df):
         status = ''
-        filename = r'C:\Users\Rafael\Desktop\codes\mtg_scrapper\data\price_' + self.edition + r'.csv'
+        filename = self.current_path + f"\\data\\price_{self.edition}.csv" + self.edition + r'.csv'
         file_path = Path(filename)
 
         if(file_path.exists()):
@@ -30,9 +32,9 @@ class DFHandler():
         print(f"CSV file in path: {filename}, has been {status}")  
 
     def batch(self, batch_index):
-        
         initial_position = batch_index*self.batch_size
         final_position = (batch_index+1)*self.batch_size
+        
         final_position = self.size if final_position > self.size else final_position
 
         Logger(self.edition).write([

@@ -118,7 +118,7 @@ class Scraper:
             )
 
             #use row (np.array) in the function
-            tasks = [self.get_price(context, card) 
+            tasks = [self.get_price(context, card)
                      for card in df_paginated.itertuples(index=False)
             ]
 
