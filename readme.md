@@ -1,6 +1,5 @@
-# Magic the Gathering Scrapper
+# MTG Scrapper
 
-Esse scrapper foi configurado para obter diariamente, de forma automatizada, o preço das cartas do bloco "A Saga de Urza", do jogo Magic the Gathering. O script foi implementado de forma a 
-raspar o site da Liga Magic, pegando os 8 menores valores de cada carta, fazendo uso de ferramentas como Playwright e Pytesseract (OCR). A listagem das cartas foi realizada utilizando a API pública do Scryfall.
-
-Esse projeto é somente para fins pessoais com propósito de estudo e não possui qualquer vínculo ou inteção lucrativa.
+This scrapper was configured to automatically obtain the price of cards from the "Urza's Saga" block of the Magic the Gathering game on a daily basis. 
+The script was implemented to scrape the Liga Magic website, taking the 8 lowest values ​​of each card, using tools such as Playwright and Pytesseract (OCR). The cards were listed using the Scryfall public API. 
+This project is for personal study purposes only and has no profit motive or intention.
